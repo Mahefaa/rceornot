@@ -134,6 +134,11 @@ dependencies {
 
     implementation 'org.reflections:reflections:0.10.2'
 
+    implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+    implementation 'org.graalvm.polyglot:polyglot:23.1.2'
+    implementation 'org.graalvm.polyglot:js:23.1.2'
+    implementation 'org.graalvm.polyglot:python:23.1.2'
+
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'
     testCompileOnly 'org.projectlombok:lombok:1.18.30'

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Language Code Runner</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/dracula.min.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        header {
+            background-color: #1e293b;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #38bdf8;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem 2rem;
+            flex: 1;
+        }
+        @media (max-width: 900px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+        .card {
+            background-color: #1e293b;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .card-header {
+            padding: 0.75rem 1rem;
+            background-color: #0f172a;
+            border-bottom: 1px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-header h2 {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #94a3b8;
+        }
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        select {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid #475569;
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            outline: none;
+            cursor: pointer;
+        }
+        select:focus {
+            border-color: #38bdf8;
+        }
+        .btn-run {
+            background: linear-gradient(135deg, #0284c7, #2563eb);
+            color: white;
+            border: none;
+            padding: 0.45rem 1.25rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-run:hover {
+            opacity: 0.9;
+        }
+        .btn-run:disabled {
+            background: #475569;
+            cursor: not-allowed;
+        }
+        .CodeMirror {
+            height: 100% !important;
+            min-height: 420px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        textarea#code {
+            width: 100%;
+            height: 420px;
+            background: #282a36;
+            color: #f8f8f2;
+            border: none;
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 14px;
+            outline: none;
+            resize: none;
+        }
+        .output-box {
+            flex: 1;
+            padding: 1rem;
+            background-color: #020617;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 13px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+            min-height: 420px;
+            color: #a7f3d0;
+        }
+        .badge {
+            font-size: 0.75rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 9999px;
+            background-color: #164e63;
+            color: #67e8f9;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚡ Multi-Language Code Runner</h1>
+        <span class="badge">GraalVM &amp; Java Sandbox</span>
+    </header>
+
+    <main class="container">
+        <!-- Editor Section -->
+        <section class="card">
+            <form id="runnerForm" method="post" th:action="@{/}">
+                <div class="card-header">
+                    <h2>Source Code Editor</h2>
+                    <div class="controls">
+                        <select id="language" name="language">
+                            <option value="python" th:selected="${language == 'python'}">Python (GraalVM)</option>
+                            <option value="javascript" th:selected="${language == 'javascript' or language == 'js'}">JavaScript (GraalVM)</option>
+                            <option value="java" th:selected="${language == 'java'}">Java (In-Memory Compiler)</option>
+                        </select>
+                        <button type="submit" id="run-btn" class="btn-run">Run Code</button>
+                    </div>
+                </div>
+                <div>
+                    <textarea id="code" name="code" th:text="${code}">print('Hello, World!')</textarea>
+                </div>
+            </form>
+        </section>
+
+        <!-- Output Section -->
+        <section class="card">
+            <div class="card-header">
+                <h2>Execution Output</h2>
+                <span id="status-badge" class="badge">Ready</span>
+            </div>
+            <pre id="output" class="output-box" th:text="${output != null and !output.isEmpty() ? output : 'Execution results will appear here...'}"></pre>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js"></script>
+    <script>
+        const langSelect = document.getElementById('language');
+        const codeTextarea = document.getElementById('code');
+        const runnerForm = document.getElementById('runnerForm');
+        const outputPre = document.getElementById('output');
+        const statusBadge = document.getElementById('status-badge');
+        const runBtn = document.getElementById('run-btn');
+
+        let editor = null;
+        if (typeof CodeMirror !== 'undefined') {
+            const getMode = (lang) => {
+                if (lang === 'python') return 'python';
+                if (lang === 'javascript' || lang === 'js') return 'javascript';
+                return 'text/x-java';
+            };
+
+            editor = CodeMirror.fromTextArea(codeTextarea, {
+                lineNumbers: true,
+                theme: 'dracula',
+                mode: getMode(langSelect.value),
+                tabSize: 4,
+                indentUnit: 4
+            });
+
+            langSelect.addEventListener('change', () => {
+                editor.setOption('mode', getMode(langSelect.value));
+            });
+        }
+
+        runnerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const codeValue = editor ? editor.getValue() : codeTextarea.value;
+            const langValue = langSelect.value;
+
+            runBtn.disabled = true;
+            statusBadge.innerText = 'Running...';
+            statusBadge.style.backgroundColor = '#854d0e';
+            statusBadge.style.color = '#fef08a';
+
+            try {
+                const response = await fetch('/execute', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ language: langValue, code: codeValue })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+                outputPre.textContent = data.output || data.stdout || data.stderr || 'No output produced.';
+                statusBadge.innerText = data.success ? 'Success' : 'Failed';
+                statusBadge.style.backgroundColor = data.success ? '#166534' : '#991b1b';
+                statusBadge.style.color = data.success ? '#bbf7d0' : '#fecaca';
+            } catch (err) {
+                // Fallback to standard form submission if AJAX fails
+                codeTextarea.value = codeValue;
+                runnerForm.submit();
+            } finally {
+                runBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
