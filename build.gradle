@@ -121,7 +121,8 @@ dependencies {
     implementation 'com.amazonaws:aws-lambda-java-events:3.11.3'
     implementation 'software.amazon.awssdk:sqs:2.21.40'
     implementation 'software.amazon.awssdk:eventbridge:2.21.40'
-    implementation 'software.amazon.awssdk.crt:aws-crt:0.28.12'
+    // aws-crt removed to keep Lambda uncompressed package size below 250MB limit
+    // implementation 'software.amazon.awssdk.crt:aws-crt:0.28.12'
     implementation 'software.amazon.awssdk:ses:2.21.40'
     implementation 'software.amazon.awssdk:core:2.21.40'
 
@@ -137,7 +138,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
     implementation 'org.graalvm.polyglot:polyglot:23.1.2'
     implementation 'org.graalvm.polyglot:js:23.1.2'
-    implementation 'org.graalvm.polyglot:python:23.1.2'
+    implementation('org.graalvm.polyglot:python:23.1.2') { exclude group: 'org.graalvm.python', module: 'python-resources' }
 
     compileOnly 'org.projectlombok:lombok:1.18.30'
     annotationProcessor 'org.projectlombok:lombok:1.18.30'

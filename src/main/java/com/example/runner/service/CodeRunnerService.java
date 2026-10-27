@@ -71,6 +71,7 @@ public class CodeRunnerService {
 
     try (Context context =
         Context.newBuilder(lang)
+            .logHandler(OutputStream.nullOutputStream())
             .option("engine.WarnInterpreterOnly", "false")
             .allowEnvironmentAccess(EnvironmentAccess.NONE)
             .allowNativeAccess(false)
